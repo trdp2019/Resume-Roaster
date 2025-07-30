@@ -75,4 +75,4 @@ MIT License - feel free to use this for your own projects!
 
 ---
 
-**Built with ❤️ and lots of ☕️ by the Resume Roaster team**
+**Built with ❤️ and lots of ☕️ by [Tridip](https://googleit.in)**
