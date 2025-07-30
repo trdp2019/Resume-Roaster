@@ -98,68 +98,43 @@ export default function Index() {
       reader.onload = async (e) => {
         try {
           const arrayBuffer = e.target?.result as ArrayBuffer;
-          const uint8Array = new Uint8Array(arrayBuffer);
-          
-          // Simple text extraction simulation since pdf-parse from CDN might not work exactly as expected
-          // In a real implementation, you'd use a proper PDF parsing library
-          const text = `RESUME CONTENT FROM ${file.name.toUpperCase()}
 
-CONTACT INFORMATION:
-John Doe
-Software Engineer
-Email: john.doe@email.com
-Phone: (555) 123-4567
-LinkedIn: linkedin.com/in/johndoe
+          // Import PDF.js dynamically
+          const pdfjsLib = await import('pdfjs-dist');
 
-PROFESSIONAL SUMMARY:
-Experienced software developer with 5+ years in full-stack development. 
-Passionate about creating innovative solutions and working with cutting-edge technologies.
-Strong background in JavaScript, React, Node.js, and cloud platforms.
+          // Set worker source
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
-WORK EXPERIENCE:
-Senior Software Engineer | TechCorp Inc. | 2021-Present
-- Developed and maintained web applications using React and Node.js
-- Collaborated with cross-functional teams to deliver high-quality software
-- Implemented responsive design principles and optimized application performance
-- Mentored junior developers and conducted code reviews
+          // Load the PDF document
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
-Software Developer | StartupXYZ | 2019-2021
-- Built scalable web applications from scratch
-- Worked with agile methodologies and participated in daily standups
-- Integrated third-party APIs and payment systems
-- Contributed to architecture decisions and technical documentation
+          let fullText = '';
 
-EDUCATION:
-Bachelor of Science in Computer Science
-State University | 2015-2019
-GPA: 3.7/4.0
+          // Extract text from each page
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
 
-SKILLS:
-- Programming Languages: JavaScript, Python, Java, TypeScript
-- Frontend: React, Vue.js, HTML5, CSS3, Tailwind CSS
-- Backend: Node.js, Express, Django, Spring Boot
-- Databases: PostgreSQL, MongoDB, Redis
-- Cloud: AWS, Azure, Docker, Kubernetes
-- Tools: Git, Jenkins, Jira, VS Code
+            // Combine all text items from the page
+            const pageText = textContent.items
+              .map((item: any) => item.str)
+              .join(' ');
 
-PROJECTS:
-E-commerce Platform
-- Built a full-stack e-commerce solution with React and Node.js
-- Implemented user authentication, payment processing, and inventory management
-- Deployed on AWS with CI/CD pipeline
+            fullText += pageText + '\n\n';
+          }
 
-Task Management App
-- Created a collaborative task management application
-- Used React for frontend and Express.js for backend
-- Implemented real-time updates using WebSockets
+          if (!fullText.trim()) {
+            throw new Error('No text found in PDF. The PDF might be image-based or encrypted.');
+          }
 
-CERTIFICATIONS:
-- AWS Certified Developer Associate (2022)
-- Google Cloud Professional Developer (2021)`;
-          
-          resolve(text);
+          resolve(fullText.trim());
         } catch (error) {
-          reject(error);
+          console.error('PDF parsing error:', error);
+          reject(new Error(
+            error instanceof Error
+              ? `Failed to parse PDF: ${error.message}`
+              : 'Failed to parse PDF. Please ensure it\'s a valid PDF file with extractable text.'
+          ));
         }
       };
       reader.onerror = () => reject(new Error('Failed to read file'));
@@ -173,16 +148,28 @@ CERTIFICATIONS:
       return;
     }
 
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File too large! Please upload a PDF smaller than 10MB. 📏');
+      return;
+    }
+
     setIsProcessing(true);
     setError("");
-    
+
     try {
       const text = await extractTextFromPDF(file);
+
+      // Check if extracted text is substantial enough
+      if (text.length < 100) {
+        throw new Error('This PDF seems to have very little text. Please ensure it\'s a text-based resume and not just images.');
+      }
+
       const critique = await generateCritique(text, file.name);
-      
+
       if (critique) {
         setCurrentCritique(critique);
-        
+
         // Save to local storage
         const updated = [critique, ...savedCritiques];
         setSavedCritiques(updated);
@@ -190,7 +177,19 @@ CERTIFICATIONS:
       }
     } catch (error: any) {
       console.error('Error processing file:', error);
-      setError(error.message || 'Something went wrong! Our AI is probably laughing too hard to respond. 😂');
+
+      // Provide specific error messages for common issues
+      let errorMessage = 'Something went wrong! Our AI is probably laughing too hard to respond. 😂';
+
+      if (error.message.includes('PDF')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('text')) {
+        errorMessage = 'This PDF appears to be image-based or encrypted. Please upload a text-based PDF resume. 📄';
+      } else if (error.message.includes('Server error')) {
+        errorMessage = 'Our roasting server is taking a coffee break! ☕️ Please try again in a moment.';
+      }
+
+      setError(errorMessage);
     } finally {
       setIsProcessing(false);
     }
@@ -314,11 +313,15 @@ CERTIFICATIONS:
                     <p className="text-xl font-semibold text-gray-700 mb-2">
                       Drop your resume PDF here or click to upload
                     </p>
-                    <p className="text-gray-500 flex items-center justify-center gap-2">
+                    <p className="text-gray-500 mb-3 flex items-center justify-center gap-2">
                       <Flame className="w-5 h-5 text-fun-orange animate-pulse" />
-                      Ready to get absolutely ROASTED? 
+                      Ready to get absolutely ROASTED?
                       <Laugh className="w-5 h-5 text-fun-pink animate-wiggle" />
                     </p>
+                    <div className="text-sm text-gray-400 flex items-center justify-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>PDF files only • Max 10MB • Text-based resumes work best</span>
+                    </div>
                   </div>
                 )}
               </div>
