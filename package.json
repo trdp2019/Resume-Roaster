@@ -1,5 +1,5 @@
 {
-  "name": "fusion-starter",
+  "name": "resume-roaster",
   "private": true,
   "type": "module",
   "pkg": {
@@ -18,7 +18,8 @@
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "postinstall": "npm install --legacy-peer-deps"
   },
   "dependencies": {
     "dotenv": "^17.2.0",
