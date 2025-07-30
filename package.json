@@ -18,8 +18,7 @@
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc",
-    "postinstall": "npm install --legacy-peer-deps"
+    "typecheck": "tsc"
   },
   "dependencies": {
     "dotenv": "^17.2.0",
