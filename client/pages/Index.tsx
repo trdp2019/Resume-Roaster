@@ -102,8 +102,8 @@ export default function Index() {
           // Import PDF.js dynamically
           const pdfjsLib = await import('pdfjs-dist');
 
-          // Set worker source
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+          // Use jsDelivr CDN with a proven stable version
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 
           // Load the PDF document
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -235,7 +235,7 @@ export default function Index() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold text-white mb-4 animate-bounce-gentle">
-            <Brain className="inline-block w-16 h-16 ml-2 animate-pulse" />
+            <Brain className="inline-block w-16 h-16 mr-2 animate-pulse" />
             Resume <span className="text-fun-yellow animate-wiggle inline-block">Roaster</span> 
             <Flame className="inline-block w-16 h-16 ml-2 text-fun-orange animate-wiggle" />
           </h1>
