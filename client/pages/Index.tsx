@@ -235,15 +235,16 @@ export default function Index() {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold text-white mb-4 animate-bounce-gentle">
+            <Brain className="w-6 h-6 animate-pulse" />
             Resume <span className="text-fun-yellow animate-wiggle inline-block">Roaster</span> 
             <Flame className="inline-block w-16 h-16 ml-2 text-fun-orange animate-wiggle" />
           </h1>
           <p className="text-2xl text-white/90 mb-2 animate-float">
             Get <span className="text-fun-yellow font-bold">BRUTALLY</span> honest AI feedback on your resume
           </p>
-          <p className="text-lg text-white/70 flex items-center justify-center gap-2">
-            <Brain className="w-6 h-6 animate-pulse" />
-            Powered by Llama3-70B for maximum roasting potential! 
+          <p className="text-lg text-white/70 flex items-center justify-center gap-2 cursor-pointer hover:text-yellow-400 transition" onClick={() => window.open("https://github.com/your-username/resume-roaster", "_blank")}>
+            <Star className="w-6 h-6 animate-pulse" />
+            If you like it, do it. Give us a star on GitHub!
             <Laugh className="w-6 h-6 animate-bounce" />
           </p>
         </div>
