@@ -1,13 +1,15 @@
 import { useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Upload, FileText, Zap, Star, Smile, AlertCircle, 
+import {
+  Upload, FileText, Zap, Star, Smile, AlertCircle,
   Brain, Coffee, Flame, Skull, Heart, Laugh,
-  Target, Rocket, Trophy, Crown, Bomb, Sparkles
+  Target, Rocket, Trophy, Crown, Bomb, Sparkles,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CritiqueRequest, CritiqueResponse } from "@shared/critique";
+import html2canvas from "html2canvas";
 
 interface CritiqueResult {
   id: string;
@@ -28,7 +30,7 @@ const roastIcons = {
 
 const roastLabels = {
   mild: "Gentle Roast ❤️",
-  medium: "Medium Roast 😄", 
+  medium: "Medium Roast 😄",
   spicy: "Spicy Roast 🌶️",
   nuclear: "Nuclear Roast 💀"
 };
@@ -50,6 +52,35 @@ export default function Index() {
     return [];
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const critiqueCardRef = useRef<HTMLDivElement>(null);
+  const critiqueContentRef = useRef<HTMLDivElement>(null);
+
+  const downloadCritiqueAsImage = useCallback(async () => {
+    if (!critiqueContentRef.current || !currentCritique) return;
+
+    try {
+      const canvas = await html2canvas(critiqueContentRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        width: critiqueContentRef.current.offsetWidth,
+        height: critiqueContentRef.current.offsetHeight
+      });
+
+      const link = document.createElement('a');
+      link.download = `resume-critique-${currentCritique.filename.replace('.pdf', '')}.png`;
+      link.href = canvas.toDataURL();
+      link.click();
+    } catch (error) {
+      console.error('Error generating image:', error);
+      setError('Failed to generate image. Please try again! 📸');
+    }
+  }, [currentCritique]);
+
+
+
+
 
   const generateCritique = useCallback(async (resumeText: string, filename: string): Promise<CritiqueResult | null> => {
     try {
@@ -236,7 +267,7 @@ export default function Index() {
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold text-white mb-4 animate-bounce-gentle">
             <Brain className="inline-block w-16 h-16 mr-2 animate-pulse" />
-            Resume <span className="text-fun-yellow animate-wiggle inline-block">Roaster</span> 
+            Resume <span className="text-fun-yellow animate-wiggle inline-block">Roaster</span>
             <Flame className="inline-block w-16 h-16 ml-2 text-fun-orange animate-wiggle" />
           </h1>
           <p className="text-2xl text-white/90 mb-2 animate-float">
@@ -267,8 +298,8 @@ export default function Index() {
               <div
                 className={cn(
                   "border-4 border-dashed transition-all duration-300 p-12 text-center cursor-pointer",
-                  isDragOver 
-                    ? "border-fun-purple bg-fun-purple/10 scale-105" 
+                  isDragOver
+                    ? "border-fun-purple bg-fun-purple/10 scale-105"
                     : "border-gray-300 hover:border-fun-blue hover:bg-fun-blue/5"
                 )}
                 onDrop={handleDrop}
@@ -283,7 +314,7 @@ export default function Index() {
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                
+
                 {isProcessing ? (
                   <div className="animate-pulse-fun">
                     <div className="flex items-center justify-center gap-4 mb-4">
@@ -332,7 +363,7 @@ export default function Index() {
           /* Critique Results */
           <div className="max-w-4xl mx-auto">
             <Card className="mb-8 overflow-hidden shadow-2xl">
-              <CardContent className="p-8">
+              <CardContent ref={critiqueContentRef} className="p-8">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="p-3 bg-fun-green/20 rounded-full animate-pulse">
                     <FileText className="w-8 h-8 text-fun-green" />
@@ -369,36 +400,53 @@ export default function Index() {
                         {line.trim()}
                       </p>
                     ))}
-                  </div>
-                </div>
 
-                <div className="mt-8 flex gap-4">
-                  <Button 
-                    onClick={() => setCurrentCritique(null)}
-                    className="bg-fun-purple hover:bg-fun-purple/80 text-white transition-all duration-300 hover:scale-105 flex items-center gap-2"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Roast Another Resume
-                    <Flame className="w-4 h-4 animate-wiggle" />
-                  </Button>
+                    {/* Attribution */}
+                    <div className="mt-6 pt-4 border-t border-fun-blue/20 text-center">
+                      <p className="text-sm text-gray-500 italic">
+                        Generated from Resume Roaster by <span className="font-semibold text-fun-purple">TRIDIP</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Action Buttons - Outside card so they're not included in image */}
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button
+                onClick={() => setCurrentCritique(null)}
+                className="bg-fun-purple hover:bg-fun-purple/80 text-white transition-all duration-300 hover:scale-105 flex items-center gap-2"
+              >
+                <Upload className="w-4 h-4" />
+                Roast Another Resume
+                <Flame className="w-4 h-4 animate-wiggle" />
+              </Button>
+
+              <Button
+                onClick={downloadCritiqueAsImage}
+                variant="outline"
+                className="border-fun-blue text-fun-blue hover:bg-fun-blue hover:text-white transition-all duration-300 hover:scale-105 flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download as Image
+              </Button>
+            </div>
           </div>
         )}
 
         {/* Previous Critiques */}
         {savedCritiques.length > 0 && (
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto mt-12">
             <h3 className="text-3xl font-bold text-white mb-6 text-center flex items-center justify-center gap-4">
               <Flame className="w-8 h-8 animate-wiggle" />
-              Previous Roasts 
+              Previous Roasts
               <Flame className="w-8 h-8 animate-wiggle" />
             </h3>
             <div className="grid gap-4">
               {savedCritiques.slice(0, 3).map((critique) => (
-                <Card 
-                  key={critique.id} 
+                <Card
+                  key={critique.id}
                   className="cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl animate-float"
                   onClick={() => setCurrentCritique(critique)}
                 >
@@ -436,7 +484,7 @@ export default function Index() {
         <div className="mt-16 text-center">
           <h3 className="text-3xl font-bold text-white mb-8 flex items-center justify-center gap-4">
             <Brain className="w-8 h-8 animate-pulse" />
-            Why Choose Resume Roaster? 
+            Why Choose Resume Roaster?
             <Zap className="w-8 h-8 animate-wiggle" />
           </h3>
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -452,7 +500,7 @@ export default function Index() {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:scale-105 transition-all duration-300 animate-float [animation-delay:0.2s]">
               <CardContent className="p-6 text-center">
                 <div className="flex justify-center gap-2 mb-4">
@@ -465,7 +513,7 @@ export default function Index() {
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-white/10 backdrop-blur-sm border-white/20 hover:scale-105 transition-all duration-300 animate-float [animation-delay:0.4s]">
               <CardContent className="p-6 text-center">
                 <div className="flex justify-center gap-2 mb-4">
@@ -515,6 +563,29 @@ export default function Index() {
           </Card>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-black/10 backdrop-blur-sm border-t border-white/20 mt-16">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-white/80 space-y-4">
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <AlertCircle className="w-4 h-4" />
+              <span>
+                <strong>Disclaimer:</strong> This is an AI-powered tool for entertainment and educational purposes.
+                Resume critiques are generated by AI and should be considered as suggestions, not professional career advice.
+              </span>
+            </div>
+
+            <div className="border-t border-white/20 pt-4">
+              <p className="text-white/90 font-medium flex items-center justify-center gap-2">
+                <Heart className="w-4 h-4 text-fun-pink animate-pulse" />
+                Built with ❤️ and lots of ☕️ by <a href="https://googleit.in" target="_blank" rel="noopener noreferrer" className="text-fun-yellow hover:text-fun-orange transition-colors font-bold">TRIDIP</a>
+                <Coffee className="w-4 h-4 text-fun-orange animate-wiggle" />
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
